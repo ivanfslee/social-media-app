@@ -1,8 +1,12 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const mongodb = require('mongodb');
-const connectionString = require('./config/keys').mongoURI;
 
-mongodb.connect(connectionString, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, client) {
+//another way to import in databaseURI
+//const connectionString = require('./config/keys').mongoURI;
+
+mongodb.connect(process.env.CONNECTIONSTRING, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, client) {
     module.exports = client.db(); //export actual database object - we can work with the db by just requiring it in
     const app = require('./app');
-    app.listen(3000);
+    app.listen(process.env.PORT);
 });

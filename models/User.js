@@ -70,6 +70,24 @@ User.prototype.validate = function() {
 }
 
 
+User.prototype.login = function() {
+    return new Promise((resolve, reject) => {
+        this.cleanUp();
+        //check if username exists in database
+        //then method is passed an arrow function to not rebind 'this'. Without arrow, this will be global var because mongo findOne method is calling  
+        usersCollection.findOne({username: this.data.username}).then((attemptedUser) => { //if database lookup is successful, it will pass that db document into 'then' method
+            if (attemptedUser && attemptedUser.password === this.data.password) {
+                resolve('Congrats!!!!4!!!');
+            } else {
+                reject('invalid username and/or password!!!!!!!!!!!5');
+            }
+        }).catch(function() {
+            reject('Please try again later')
+        }) 
+    }) 
+}
+
+
 User.prototype.register = function() {
     this.cleanUp();
     this.validate(); 
@@ -81,5 +99,8 @@ User.prototype.register = function() {
     }
 
 }
+
+
+
 
 module.exports = User;
