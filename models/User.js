@@ -1,4 +1,5 @@
 //require in our database and our collection within the database 
+const bcrypt = require('bcryptjs');
 const usersCollection = require('../db').collection('users'); 
 const validator = require('validator');
 
@@ -56,8 +57,8 @@ User.prototype.validate = function() {
         this.errors.push('Password must be at least 12 characters.')
     }
 
-    if (this.data.password.length > 100) {
-        this.errors.push('Password cannot exceed 100 characters.')
+    if (this.data.password.length > 50) {
+        this.errors.push('Password cannot exceed 50 characters.')
     }
 
     if (this.data.username.length > 0 && this.data.username.length < 3) {
@@ -75,8 +76,8 @@ User.prototype.login = function() {
         this.cleanUp();
         //check if username exists in database
         //then method is passed an arrow function to not rebind 'this'. Without arrow, this will be global var because mongo findOne method is calling  
-        usersCollection.findOne({username: this.data.username}).then((attemptedUser) => { //if database lookup is successful, it will pass that db document into 'then' method
-            if (attemptedUser && attemptedUser.password === this.data.password) {
+        usersCollection.findOne({username: this.data.username}).then((dbUser) => { //if database lookup is successful, it will pass that db document into 'then' method
+            if (dbUser && bcrypt.compareSync(this.data.password, dbUser.password)) { //compareSync compares a hash of the users password input (this.data.password) with the hashed password in our db (dbUser.password)
                 resolve('Congrats!!!!4!!!');
             } else {
                 reject('invalid username and/or password!!!!!!!!!!!5');
@@ -94,13 +95,13 @@ User.prototype.register = function() {
 
     //if no errors, save this.data as a new doc in database
     if (!this.errors.length) {
-        // Create new user with this.data object
+        // hash user password
+        let salt = bcrypt.genSaltSync(10);
+        this.data.password = bcrypt.hashSync(this.data.password, salt);  //hashSync takes 2 args, the value to be hashed and the salt
+        // Create new user in usersCollection database with this.data object
         usersCollection.insertOne(this.data);
     }
 
 }
-
-
-
 
 module.exports = User;

@@ -4,6 +4,11 @@ const User = require('../models/User');
 exports.login = function(req, res) {
     let user = new User(req.body);
     user.login().then(function(result) {
+        req.session.user = {username: user.data.username};    
+        //session is unique for each visitor to the site. 
+        //We add a property to session called 'user', its value will be an object 
+        //session object will allow verification that the user is logged in 
+        
         res.send(result);
     }).catch(function(err) {
         res.send(err);
@@ -30,6 +35,12 @@ exports.register = (req, res) => {
 }
 
 exports.home = (req, res) => {
-    res.render('home-guest');  //render our ejs file 
+    if (req.session.user) { 
+    //if they have session data, send them to their dashboard. 
+    //The only way they have session data is if they logged in before
+        res.send('Welcome to the actual application');
+    } else {
+        res.render('home-guest');  //render our ejs file 
+    }
 }
 
