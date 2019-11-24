@@ -7,7 +7,7 @@ exports.login = function(req, res) {
         //session is unique for each visitor to the site. 
         //We add a property to session called 'user', its value will be an object 
         //session object will allow verification that the user is logged in 
-        req.session.user = {username: user.data.username}; 
+        req.session.user = {avatar: user.avatar, username: user.data.username}; //stamp avatar and username into session obj 
         //session package recognizes we are changing the session data
         // and in response, this will change the database session entry as well (which is asynchronous)
         req.session.save(function() { //we manually save to database and after that is done, callback function with res.redirect will run
@@ -46,7 +46,7 @@ exports.register = (req, res) => {
     //create new object using User.js as blueprint and passing in req.body as data parameter
     
     user.register().then(() => { //user.register() returns a promise, so we use a .then and .catch 
-        req.session.user = {username: user.data.username};
+        req.session.user = {avatar: user.avatar, username: user.data.username};
         req.session.save(function() {
             res.redirect('/');
         })
@@ -65,7 +65,7 @@ exports.home = (req, res) => {
     //if they have session data, send them to their dashboard. 
     //The only way they have session data is if they logged in before
         console.log(req.session)
-        res.render('home-dashboard', {username: req.session.user.username});  //second arg will pass data into the ejs template 
+        res.render('home-dashboard', {avatar: req.session.user.avatar, username: req.session.user.username});  //second arg will pass data into the ejs template 
         //second arg is an obj that grabs the username from the req.session object 
         //res.send('Welcome to the actual application');
     } else {

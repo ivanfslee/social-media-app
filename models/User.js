@@ -2,6 +2,7 @@
 const bcrypt = require('bcryptjs');
 const usersCollection = require('../db').db().collection('users'); 
 const validator = require('validator');
+const md5 = require('md5');
 
 
 //Constructor function for User objects
@@ -101,6 +102,8 @@ User.prototype.login = function() {
         //then method is passed an arrow function to not rebind 'this'. Without arrow, this will be global var because mongo findOne method is calling  
         usersCollection.findOne({username: this.data.username}).then((dbUser) => { //if database lookup is successful, it will pass that db document into 'then' method
             if (dbUser && bcrypt.compareSync(this.data.password, dbUser.password)) { //compareSync compares a hash of the users password input (this.data.password) with the hashed password in our db (dbUser.password)
+                this.data = dbUser; //to grab email address (this.data.email) for getAvatar
+                this.getAvatar(); //gets avatar image using registered email address and gravatar and md5 algo
                 resolve('Congrats!!!!4!!!');
             } else {
                 reject('invalid username and/or password!!!!!!!!!!!');
@@ -123,7 +126,10 @@ User.prototype.register = function() {
             let salt = bcrypt.genSaltSync(10);
             this.data.password = bcrypt.hashSync(this.data.password, salt);  //hashSync takes 2 args, the value to be hashed and the salt
             // Create new user in usersCollection database with this.data object
+            
             await usersCollection.insertOne(this.data); //make sure database action completes before we call resolve below it, so we add 'await' to the insertOne method call
+            this.getAvatar(); //storing avatar prop in memory on the user object. We do it after the database insertOne operator because email/image may change in the future
+            //we will not store this.avatar in the database. also md5 is a quick and cheap operation to do 
             resolve();
         } else {
             //there were errors so we reject
@@ -131,5 +137,13 @@ User.prototype.register = function() {
        }
    });
 }
+
+
+User.prototype.getAvatar = function() {
+    this.avatar = `https://gravatar.com/avatar/${md5(this.data.email)}/?s=128` //s = 128 is size in pixels of the image. md5 hashing algo for hashing email
+}
+
+
+
 
 module.exports = User;
