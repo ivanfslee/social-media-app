@@ -1,10 +1,12 @@
 const express = require('express');
 const session = require('express-session');
+const MongoStore = require('connect-mongo')(session); // MongoStore is a constructor. We pass in express-session package 
 const app = express();
 
 //configuration for sessions 
 let sessionOptions = session({
     secret: 'aljsdlfkjsdlfjsdljfsdl',
+    store: new MongoStore({client: require('./db')}), //by default session is stored in memory (ram), here we override the default to store session into mongoDB
     resave: false,
     saveUninitialized: false,
     cookie: {

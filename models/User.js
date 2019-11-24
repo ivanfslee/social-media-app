@@ -1,6 +1,6 @@
 //require in our database and our collection within the database 
 const bcrypt = require('bcryptjs');
-const usersCollection = require('../db').collection('users'); 
+const usersCollection = require('../db').db().collection('users'); 
 const validator = require('validator');
 
 
