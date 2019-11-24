@@ -18,7 +18,10 @@ let sessionOptions = session({
 app.use(sessionOptions);
 
 app.use(flash());
-
+app.use(function(req, res, next) { //a middleware. app.use - tells express to run this function on every request. We have it arranged before our router on line 25.
+    res.locals.user = req.session.user;  //res.locals is an object that is available from within ejs template. We add properties to it, in this case, 'user' prop
+    next(); //express will then move on to the next function for the particular route 
+})
 const router = require('./router.js');
 
 app.use(express.urlencoded({extended: false})); 

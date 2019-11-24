@@ -1,6 +1,18 @@
 //User controlling functions
 const User = require('../models/User');
 
+exports.mustBeLoggedIn = function(req, res, next) {
+    if (req.session.user) {
+        next();
+    } else {
+        req.flash('errors', 'You must logged in ')
+        req.session.save(function() {
+            res.redirect('/');
+        })
+    }
+}
+
+
 exports.login = function(req, res) {
     let user = new User(req.body);
     user.login().then(function(result) {
@@ -64,10 +76,11 @@ exports.home = (req, res) => {
     if (req.session.user) { //req.session.user only exists if user has logged on successfully in the login function - 
     //if they have session data, send them to their dashboard. 
     //The only way they have session data is if they logged in before
-        console.log(req.session)
-        res.render('home-dashboard', {avatar: req.session.user.avatar, username: req.session.user.username});  //second arg will pass data into the ejs template 
+        //console.log(req.session)
+        //res.render('home-dashboard', {avatar: req.session.user.avatar, username: req.session.user.username});  //second arg will pass data into the ejs template -
+        // later we removed the second arg and instead used a middleware in app.js to inject the req.session props to the html using res.locals object. 
+        res.render('home-dashboard');
         //second arg is an obj that grabs the username from the req.session object 
-        //res.send('Welcome to the actual application');
     } else {
         res.render('home-guest', {errors: req.flash('errors'), regErrors: req.flash('regErrors')});  //render our ejs file and inject error message from flash package
         //when we retrieve the 'errors' from the flash obj in database, it will remove the error message from the database session array also
