@@ -14,7 +14,18 @@ exports.login = function(req, res) {
             res.redirect('/');
         })
     }).catch(function(err) {
-        res.send(err);
+        // under the hood, req.flash will add another property to sessions
+        req.flash('errors', err); //first arg is array of messages, second arg is string of text we want to add to array
+        //flash adds a 'flash' prop to req.session. flash prop has a prop called 'errors' which is an array with err string in it 
+        //req.session looks like this -> req.session.flash.errors = [err]
+
+        //anytime we modify session, it will change the session doc in database which is an async action, so 
+        //we manually save it and then we do the redirect. 
+        //we have to make sure the change in the database is finished until we redirect the user
+        req.session.save(function() {
+            res.redirect('/'); //this will trigger home function 
+        })
+        
     });
 }
 
@@ -44,15 +55,16 @@ exports.register = (req, res) => {
 }
 
 exports.home = (req, res) => {
-    if (req.session.user) { //req.session.user only exists if user has logged in before or is logging in for the first time and they have user doc in database
+    if (req.session.user) { //req.session.user only exists if user has logged on successfully in the login function - 
     //if they have session data, send them to their dashboard. 
     //The only way they have session data is if they logged in before
         console.log(req.session)
-        res.render('home-dashboard', {username: req.session.user.username}); 
+        res.render('home-dashboard', {username: req.session.user.username});  //second arg will pass data into the ejs template 
         //second arg is an obj that grabs the username from the req.session object 
         //res.send('Welcome to the actual application');
     } else {
-        res.render('home-guest');  //render our ejs file 
+        res.render('home-guest', {errors: req.flash('errors')});  //render our ejs file and inject error message from flash package
+        //when we retrieve the 'errors' from the flash obj in database, it will remove the error message from the database session array also
     }
 }
 

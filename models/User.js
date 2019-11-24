@@ -80,7 +80,7 @@ User.prototype.login = function() {
             if (dbUser && bcrypt.compareSync(this.data.password, dbUser.password)) { //compareSync compares a hash of the users password input (this.data.password) with the hashed password in our db (dbUser.password)
                 resolve('Congrats!!!!4!!!');
             } else {
-                reject('invalid username and/or password!!!!!!!!!!!5');
+                reject('invalid username and/or password!!!!!!!!!!!');
             }
         }).catch(function() {
             reject('Please try again later')

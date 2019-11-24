@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session); // MongoStore is a constructor. We pass in express-session package 
+const flash = require('connect-flash') //flash messaging package 
 const app = express();
 
 //configuration for sessions 
@@ -15,6 +16,8 @@ let sessionOptions = session({
             }
 });
 app.use(sessionOptions);
+
+app.use(flash());
 
 const router = require('./router.js');
 
