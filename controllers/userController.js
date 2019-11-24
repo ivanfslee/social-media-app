@@ -47,7 +47,12 @@ exports.register = (req, res) => {
     
     user.register();
     if (user.errors.length) {
-        res.send(user.errors);
+        user.errors.forEach(function(error) {
+            req.flash('regErrors', error);
+        })
+        req.session.save(function() {
+            res.redirect('/');
+        })
     } else {
         res.send('Congrats, there are no errors.')
     }
@@ -63,7 +68,7 @@ exports.home = (req, res) => {
         //second arg is an obj that grabs the username from the req.session object 
         //res.send('Welcome to the actual application');
     } else {
-        res.render('home-guest', {errors: req.flash('errors')});  //render our ejs file and inject error message from flash package
+        res.render('home-guest', {errors: req.flash('errors'), regErrors: req.flash('regErrors')});  //render our ejs file and inject error message from flash package
         //when we retrieve the 'errors' from the flash obj in database, it will remove the error message from the database session array also
     }
 }
