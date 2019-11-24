@@ -45,18 +45,19 @@ exports.register = (req, res) => {
     let user = new User(req.body); 
     //create new object using User.js as blueprint and passing in req.body as data parameter
     
-    user.register();
-    if (user.errors.length) {
-        user.errors.forEach(function(error) {
-            req.flash('regErrors', error);
-        })
+    user.register().then(() => { //user.register() returns a promise, so we use a .then and .catch 
+        req.session.user = {username: user.data.username};
         req.session.save(function() {
             res.redirect('/');
         })
-    } else {
-        res.send('Congrats, there are no errors.')
-    }
-    
+    }).catch((regErrors) => {
+        regErrors.forEach(function(error) {
+            req.flash('regErrors', error);
+        });
+        req.session.save(function() {
+            res.redirect('/');
+        });
+    }); 
 }
 
 exports.home = (req, res) => {

@@ -37,37 +37,60 @@ User.prototype.cleanUp = function() {
 
 // Validates user registration 
 User.prototype.validate = function() {
-    if (this.data.username === '') {
-        this.errors.push('You must provide a username.')
-    }
-
-    if (this.data.username != '' && !validator.isAlphanumeric(this.data.username)) {
-        this.errors.push('Username can only contain letters and numbers.')
-    }
-
-    if (!validator.isEmail(this.data.email)) {
-        this.errors.push('You must provide a valid email address.')
-    }
-
-    if (this.data.password === '') {
-        this.errors.push('You must provide a password.')
-    }
-
-    if (this.data.password.length > 0 && this.data.password.length < 12) {
-        this.errors.push('Password must be at least 12 characters.')
-    }
-
-    if (this.data.password.length > 50) {
-        this.errors.push('Password cannot exceed 50 characters.')
-    }
-
-    if (this.data.username.length > 0 && this.data.username.length < 3) {
-        this.errors.push('Username must be at least 3 characters.')
-    }
-
-    if (this.data.username.length > 30) {
-        this.errors.push('Username cannot exceed 30 characters.')
-    }
+    return new Promise(async (resolve, reject) => { //arrow function so 'this' will not be rebound 
+        if (this.data.username === '') {
+            this.errors.push('You must provide a username.')
+        }
+    
+        if (this.data.username != '' && !validator.isAlphanumeric(this.data.username)) {
+            this.errors.push('Username can only contain letters and numbers.')
+        }
+    
+        if (!validator.isEmail(this.data.email)) {
+            this.errors.push('You must provide a valid email address.')
+        }
+    
+        if (this.data.password === '') {
+            this.errors.push('You must provide a password.')
+        }
+    
+        if (this.data.password.length > 0 && this.data.password.length < 12) {
+            this.errors.push('Password must be at least 12 characters.')
+        }
+    
+        if (this.data.password.length > 50) {
+            this.errors.push('Password cannot exceed 50 characters.')
+        }
+    
+        if (this.data.username.length > 0 && this.data.username.length < 3) {
+            this.errors.push('Username must be at least 3 characters.')
+        }
+    
+        if (this.data.username.length > 30) {
+            this.errors.push('Username cannot exceed 30 characters.')
+        }
+    
+        // only if username is valid, check if username is unique and isn't already in our database
+        if (this.data.username.length > 2 && this.data.username.length < 31 && validator.isAlphanumeric(this.data.username)) {
+            let usernameExists = await usersCollection.findOne({username: this.data.username}) //if document is found, usernameExists will be the doc obj, otherwise, it will be null 
+            //findOne is mongoDB method that returns a promise so we can use 'await', so that findOne method will complete before the if statement below is executed
+            //for await to work, we also need it within an 'async' function which is the User.prototype.validate function. 
+    
+            if (usernameExists) { 
+                this.errors.push('Username is already taken')
+            }
+        }
+    
+        // only if email is valid, check if email is unique and isn't already in our database
+        if (validator.isEmail(this.data.email)) {
+            let emailExists = await usersCollection.findOne({email: this.data.email}) 
+    
+            if (emailExists) { 
+                this.errors.push('Email is already taken')
+            }
+        }
+        resolve(); //register function continues after the this.validate() 
+    })
 }
 
 
@@ -90,18 +113,23 @@ User.prototype.login = function() {
 
 
 User.prototype.register = function() {
-    this.cleanUp();
-    this.validate(); 
-
-    //if no errors, save this.data as a new doc in database
-    if (!this.errors.length) {
-        // hash user password
-        let salt = bcrypt.genSaltSync(10);
-        this.data.password = bcrypt.hashSync(this.data.password, salt);  //hashSync takes 2 args, the value to be hashed and the salt
-        // Create new user in usersCollection database with this.data object
-        usersCollection.insertOne(this.data);
-    }
-
+    return new Promise( async (resolve, reject) => {
+        this.cleanUp();
+        await this.validate(); //validate function is made async so we need to account for that because validate() has to completed before the following if statements are run 
+   
+       //if no errors, save this.data as a new doc in database
+        if (!this.errors.length) {
+            // hash user password
+            let salt = bcrypt.genSaltSync(10);
+            this.data.password = bcrypt.hashSync(this.data.password, salt);  //hashSync takes 2 args, the value to be hashed and the salt
+            // Create new user in usersCollection database with this.data object
+            await usersCollection.insertOne(this.data); //make sure database action completes before we call resolve below it, so we add 'await' to the insertOne method call
+            resolve();
+        } else {
+            //there were errors so we reject
+            reject(this.errors); 
+       }
+   });
 }
 
 module.exports = User;
