@@ -1,6 +1,9 @@
   <%- include('includes/header') %>
     
   <div class="container py-md-5 container--narrow">
+    
+    <%- include('includes/flash') %>
+    
     <div class="text-center">
       <h2>Hello <strong><%= user.username %></strong>, your feed is empty.</h2> 
       <!-- Object is res.locals.user, so username value is in user.username-->

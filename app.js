@@ -18,7 +18,12 @@ let sessionOptions = session({
 app.use(sessionOptions);
 
 app.use(flash());
-app.use(function(req, res, next) { //a middleware. app.use - tells express to run this function on every request. We have it arranged before our router on line 25.
+app.use(function(req, res, next) { 
+    //make all error and success flash messages available from all templates
+    res.locals.errors = req.flash('errors');
+    res.locals.success = req.flash('success');
+
+    //a middleware. app.use - tells express to run this function on every request. We have it arranged before our router on line 25.
     //make current user id a available on the req object
     //if user is logged in, visitor id will be their user id
     //otherwise, if they are not logged in, their visitor id will be a zero 0. 

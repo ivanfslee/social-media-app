@@ -84,7 +84,7 @@ exports.home = (req, res) => {
         res.render('home-dashboard');
         //second arg is an obj that grabs the username from the req.session object 
     } else {
-        res.render('home-guest', {errors: req.flash('errors'), regErrors: req.flash('regErrors')});  //render our ejs file and inject error message from flash package
+        res.render('home-guest', {regErrors: req.flash('regErrors')});  //render our ejs file and inject error message from flash package
         //when we retrieve the 'errors' from the flash obj in database, it will remove the error message from the database session array also
     }
 }

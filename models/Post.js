@@ -7,10 +7,11 @@ const ObjectID = require('mongodb').ObjectID; //mongoDB treats ids specially. Es
 
 const User = require('./User')
 
-let Post = function(data, userid) {
+let Post = function(data, userid, requestedPostId) {
     this.data = data;
     this.errors = [];
-    this.userid = userid
+    this.userid = userid;
+    this.requestedPostId = requestedPostId;
 }
 
 
@@ -55,8 +56,8 @@ Post.prototype.create = function() {
             //we can do .then.catch here after insertOne or we can do async/await 
             //if we are doing multiple async things at once, async/await is cleaner code
             //if we are just doing one async thing, .then.catch is preferred 
-            postsCollection.insertOne(this.data).then(function() {
-                resolve()
+            postsCollection.insertOne(this.data).then((info) => {
+                resolve(info.ops[0]._id); //new post will have ops array in it, we want the id prop in that array - this will go to postController's create method 
             }).catch(function() {
                 this.errors.push('Please try again later');
                 reject(this.errors);
@@ -66,6 +67,47 @@ Post.prototype.create = function() {
         }
     })
 }
+
+Post.prototype.update = function() {
+    return new Promise(async (resolve, reject) => {
+        //find relevant post document in database 
+        //we need to check if post id is validated 
+        //we need to check if the visitor is the owner of the post as well
+        try {
+            let post = await Post.findSingleById(this.requestedPostId, this.userid); //findSingleById returns a promise 
+            //if
+            if (post.isVisitorOwner) {
+                // visitor is the owner of the post
+                //update the db 
+                let status = await this.actuallyUpdate(); //this actuallyUpdate method will update the database and resolves to 'success' or 'failure'
+                resolve(status);
+            } else {
+                //visitor not the owner
+                reject();
+            }
+        } catch {
+            reject();
+        }
+    })
+}
+
+
+Post.prototype.actuallyUpdate = function() {
+    return new Promise(async (resolve, reject) => {
+        this.cleanUp();
+        this.validate();
+        if (!this.errors.length) { //no validation errors, so update the database
+            await postsCollection.findOneAndUpdate({_id: new ObjectID(this.requestedPostId)}, {$set: {title: this.data.title, body: this.data.body}}) //first arg is the id we want to match, second arg is setting what we want to change, the title and body of the post
+            resolve('success');
+        } else {
+            //there are validation errors
+            resolve('failure');
+        }
+    })
+}
+
+
+
 
 
 //not an object oriented approach, we store a property called findSingleById which is a function into 'Post'
