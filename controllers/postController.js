@@ -16,13 +16,15 @@ exports.create = function(req, res) {
 
 exports.viewSingle = async function(req, res) {
     try {
+        console.log('req is ', req);
+        console.log('req.params is ', req.params)
         let post = await Post.findSingleById(req.params.id); //retrieve Post document in database by id. 
         //request has params prop with id - id refers to dynamic  part of the url route in router.js
         //router.get('/post/:id'   <- the ':id' changes depending on the post 
         //also we will define findSingleById to return a promise, so we prepend with 'await'  
         res.render('single-post-screen', {post: post});
     } catch {
-        res.send("404 template here");
+        res.render('404');
     }
     
 }

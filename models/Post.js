@@ -72,10 +72,10 @@ Post.findSingleById = function(id) {
         //check id isnt malicious and is just a string and id is an ObjectID
         if (typeof id !== 'string' || !ObjectID.isValid(id)) {
             reject()
-            return; 
+            return; //return to end function entirely (in case malicious user tried to put in a non-string or invalid id into URL
         } 
 
-        //go through database to find  _id - await because any database lookups are async
+        //go through database to find  _id. await because any database lookups are async
         //we need to wait for it to complete before it goes on in the code 
         let post = await postsCollection.findOne({_id: new ObjectID(id)}); 
         if (post) {
