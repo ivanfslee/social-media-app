@@ -84,3 +84,14 @@ exports.edit = function(req, res) {
         }) //edit the session obj and save which changes the database 
     });
 }
+
+exports.delete = function(req, res) {
+    Post.delete(req.params.id, req.visitorId).then(() => {
+        req.flash('success', 'Post successfull deleted');
+        req.session.save(() => res.redirect(`/profile/${req.session.user.username}`));
+    }).catch(() => {
+        req.flash('errors', 'You do not have permission to delete');
+        req.session.save(() => res.redirect('/'));
+    });
+
+}
