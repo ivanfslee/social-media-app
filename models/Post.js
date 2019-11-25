@@ -3,9 +3,12 @@ const postsCollection = require('../db').db().collection('posts');
 //require('../db').db() gets the actual database.  
 //.collection('posts') gives us access to posts collection in database 
 
-let Post = function(data) {
+const ObjectID = require('mongodb').ObjectID; //mongoDB treats ids specially. Essentially, we create an objectId object type 
+
+let Post = function(data, userid) {
     this.data = data;
     this.errors = [];
+    this.userid = userid
 }
 
 
@@ -25,7 +28,8 @@ Post.prototype.cleanUp = function() {
     this.data = {
         title: this.data.title.trim(),
         body: this.data.body.trim(),
-        createdDate: new Date() //built in JS constructor for date objects 
+        createdDate: new Date(), //built in JS constructor for date objects 
+        author: ObjectID(this.userid) //this will return objectID object that mongodb uses
     }
 }
 
@@ -57,6 +61,27 @@ Post.prototype.create = function() {
             })
         } else {
             reject(this.errors);
+        }
+    })
+}
+
+//not an object oriented approach, we store a property called findSingleById which is a function into 'Post'
+//we can treat 'Post' as a constructor (OOP approach) and we can also call a simple function on it 
+Post.findSingleById = function(id) { 
+    return new Promise(async function(resolve, reject) { //async because we have await in the body of code below
+        //check id isnt malicious and is just a string and id is an ObjectID
+        if (typeof id !== 'string' || !ObjectID.isValid(id)) {
+            reject()
+            return; 
+        } 
+
+        //go through database to find  _id - await because any database lookups are async
+        //we need to wait for it to complete before it goes on in the code 
+        let post = await postsCollection.findOne({_id: new ObjectID(id)}); 
+        if (post) {
+            resolve(post)
+        } else {
+            reject()
         }
     })
 }

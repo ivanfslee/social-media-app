@@ -6,10 +6,23 @@ exports.viewCreateScreen = function(req, res) {
 }
 
 exports.create = function(req, res) {
-    let post = new Post(req.body); //req.body contains the form data user submits
+    let post = new Post(req.body , req.session.user._id); //req.body contains the form data user submits, req.session contains the avatar, id, username
     post.create().then(function() {
         res.send('New post created');
     }).catch(function(errors) {
         res.send(errors);
     });
+}
+
+exports.viewSingle = async function(req, res) {
+    try {
+        let post = await Post.findSingleById(req.params.id); //retrieve Post document in database by id. 
+        //request has params prop with id - id refers to dynamic  part of the url route in router.js
+        //router.get('/post/:id'   <- the ':id' changes depending on the post 
+        //also we will define findSingleById to return a promise, so we prepend with 'await'  
+        res.render('single-post-screen', {post: post});
+    } catch {
+        res.send("404 template here");
+    }
+    
 }
