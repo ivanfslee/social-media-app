@@ -5,6 +5,8 @@ const postsCollection = require('../db').db().collection('posts');
 
 const ObjectID = require('mongodb').ObjectID; //mongoDB treats ids specially. Essentially, we create an objectId object type 
 
+const User = require('./User')
+
 let Post = function(data, userid) {
     this.data = data;
     this.errors = [];
@@ -77,9 +79,35 @@ Post.findSingleById = function(id) {
 
         //go through database to find  _id. await because any database lookups are async
         //we need to wait for it to complete before it goes on in the code 
-        let post = await postsCollection.findOne({_id: new ObjectID(id)}); 
-        if (post) {
-            resolve(post)
+        let posts = await postsCollection.aggregate([
+            {$match: {_id: new ObjectID(id)}}, //1st operation - looking for a match of _id prop with value of the id that was passed in (converted to mongodb ObjectID) 
+            {$lookup: {from: 'users', localField: 'author', foreignField: '_id', as: 'authorDocument' }},  //2nd operation -we are in posts collection, we need to lookup from 'users' collection. localfield - the field from within the current post item that we want to perform that match on is the author field, which contains the id of the matching user
+            // looking for _id in foreignField.  mongodb will use 'authorDocument' to add an authorDocument property
+            //$lookup will return an array 
+            {$project: {
+                title:1, 
+                body: 1, 
+                createdDate: 1, 
+                author: {$arrayElemAt: ["$authorDocument", 0]} //we want the array element at the 0th position
+            }} //project allows us to spell out exactly what fields we want resulting object to have 
+        ]).toArray() 
+        //aggregate performs multiple operations at once. aggregate returns mongodb obj, we convert to array so we can work with it 
+
+        // clean up author prop in each post object 
+        //posts will return an array 
+        //we modify the posts so that in only includes username and avatar in the author prop
+        posts = posts.map(function(post) {
+            post.author = {
+                username: post.author.username,
+                avatar: new User(post.author, true).avatar
+            }
+            return post
+        })
+
+
+
+        if (posts.length) {
+            resolve(posts[0])
         } else {
             reject()
         }

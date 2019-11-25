@@ -7,9 +7,16 @@ const md5 = require('md5');
 
 //Constructor function for User objects
 //Do not use arrow function here
-let User = function(data)  {
+let User = function(data, getAvatar)  {
     this.data = data;
     this.errors = [];
+    if (getAvatar === undefined) {
+        getAvatar = false
+    }
+
+    if (getAvatar) {
+        this.getAvatar();
+    }
     
 }
 
@@ -143,7 +150,37 @@ User.prototype.getAvatar = function() {
     this.avatar = `https://gravatar.com/avatar/${md5(this.data.email)}/?s=128` //s = 128 is size in pixels of the image. md5 hashing algo for hashing email
 }
 
+//not an OOP approach here, so we don't need to add it to prototype
+User.findByUsername = function(username) {
+    return new Promise(function(resolve, reject) {
+        if (typeof username !== 'string') {
+            reject();
+            return;
+        }
 
+        usersCollection.findOne({username: username}).then(function(userDoc) {
+            if (userDoc) {
+                //we could resolve the entire userDoc, but userDoc has alot of extra info we don't necessarily need like hashed password
+                //so we will clean up the userDoc before passing it to resolve()
+                //we clean, by creating a new User instance 
+                
+                userDoc = new User(userDoc, true) //true argument will get avatar based on email address
+                userDoc = {
+                    _id: userDoc.data._id,
+                    username: userDoc.data.username,
+                    avatar: userDoc.avatar
+                }
+                //now userDoc will only have those 3 props - id, username, and avatar
+
+                resolve(userDoc);
+            } else {
+                reject();
+            }
+        }).catch(function() {
+            reject();
+        });
+    })
+}
 
 
 module.exports = User;

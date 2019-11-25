@@ -88,3 +88,19 @@ exports.home = (req, res) => {
     }
 }
 
+
+exports.ifUserExists = function(req, res, next) {
+    User.findByUsername(req.params.username).then(function(userDocument) { //findByUsername returns a user doc from database 
+        req.profileUser = userDocument; //we will make use of req.profileUser in profilePostsScreen method
+        next();
+    }).catch(function() {
+        res.render('404');
+    })
+}
+
+exports.profilePostsScreen = function(req, res) {
+    res.render('profile', {
+        profileUsername: req.profileUser.username, //values are stored in req.profileUser that was defined in ifUserExists method
+        profileAvatar: req.profileUser.avatar
+    }); //second argument is passed into 'profile.ejs' and injected into the ejs template
+}
