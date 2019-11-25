@@ -1,9 +1,10 @@
 const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session); // MongoStore is a constructor. We pass in express-session package 
-const flash = require('connect-flash') //flash messaging package 
+const flash = require('connect-flash'); //flash messaging package 
+const markdown = require('marked');
 const app = express();
-
+const sanitizeHTML = require('sanitize-html');
 //configuration for sessions 
 let sessionOptions = session({
     secret: 'aljsdlfkjsdlfjsdljfsdl',
@@ -18,7 +19,12 @@ let sessionOptions = session({
 app.use(sessionOptions);
 
 app.use(flash());
-app.use(function(req, res, next) { 
+app.use(function(req, res, next) {  //this will run for every request
+    // make markdown available from within ejs templates
+    res.locals.filterUserHTML = function(content) { //res.locals is available to all our ejs templates
+        return sanitizeHTML(markdown(content), {allowedTags: ['p', 'br','ul', 'ol', 'li', 'strong', 'bold', 'i', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'], allowedAttributes: {}}); //pass the content parameter into our markdown/marked package 
+    } //we sanitize markdown to allow only innocent html tags and not something like <script> or <a> for links 
+
     //make all error and success flash messages available from all templates
     res.locals.errors = req.flash('errors');
     res.locals.success = req.flash('success');

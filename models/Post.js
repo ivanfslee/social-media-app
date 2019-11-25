@@ -3,10 +3,11 @@ const postsCollection = require('../db').db().collection('posts');
 //require('../db').db() gets the actual database.  
 //.collection('posts') gives us access to posts collection in database 
 
+
 const ObjectID = require('mongodb').ObjectID; //mongoDB treats ids specially. Essentially, we create an objectId object type 
 
 const User = require('./User')
-
+const sanitizeHTML = require('sanitize-html');
 let Post = function(data, userid, requestedPostId) {
     this.data = data;
     this.errors = [];
@@ -29,8 +30,8 @@ Post.prototype.cleanUp = function() {
 
     // remove any properties user may maliciously try to add by redefining this.data 
     this.data = {
-        title: this.data.title.trim(),
-        body: this.data.body.trim(),
+        title: sanitizeHTML(this.data.title.trim(), {allowedTags: [], allowedAttributes: {}}),
+        body: sanitizeHTML(this.data.body.trim(), {allowedTags: [], allowedAttributes: {}}), //first arg is what we want to sanitize, second arg is configuration - sanitize so malicious users cannot execute javascript or html from the post 
         createdDate: new Date(), //built in JS constructor for date objects 
         author: ObjectID(this.userid) //this will return objectID object that mongodb uses
     }

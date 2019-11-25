@@ -21,7 +21,7 @@
       Posted by <a href="#"><%= post.author.username %></a> on <%= post.createdDate.getMonth() + 1 %>/<%= post.createdDate.getDate() %>/<%= post.createdDate.getFullYear() %></p> <!-- plus 1 because getMonth() is 0 based. January is 0 -->
 
     <div class="body-content">
-      <%= post.body %>
+      <%- filterUserHTML(post.body) %> <!-- filterUserHTML is a function we defined to convert markdown text passed into it as html-->
     </div>
 
   </div>
