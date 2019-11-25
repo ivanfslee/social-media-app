@@ -1,5 +1,6 @@
 //User controlling functions
 const User = require('../models/User');
+const Post = require('../models/Post');
 
 exports.mustBeLoggedIn = function(req, res, next) {
     if (req.session.user) {
@@ -99,8 +100,18 @@ exports.ifUserExists = function(req, res, next) {
 }
 
 exports.profilePostsScreen = function(req, res) {
-    res.render('profile', {
-        profileUsername: req.profileUser.username, //values are stored in req.profileUser that was defined in ifUserExists method
-        profileAvatar: req.profileUser.avatar
-    }); //second argument is passed into 'profile.ejs' and injected into the ejs template
+    //ask post model for posts by certain author id 
+    Post.findByAuthorId(req.profileUser._id).then(function(posts) { //findByAuthorId will return array of posts 
+        //
+        res.render('profile', {
+            posts: posts,
+            profileUsername: req.profileUser.username, //values are stored in req.profileUser that was defined in ifUserExists method
+            profileAvatar: req.profileUser.avatar
+        }); //second argument is passed into 'profile.ejs' and injected into the ejs template
+
+    }).catch(function() {
+        res.render('404');
+    });
+
+
 }

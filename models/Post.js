@@ -67,20 +67,12 @@ Post.prototype.create = function() {
     })
 }
 
+
 //not an object oriented approach, we store a property called findSingleById which is a function into 'Post'
 //we can treat 'Post' as a constructor (OOP approach) and we can also call a simple function on it 
-Post.findSingleById = function(id) { 
+Post.reusablePostQuery = function(uniqueOperations, visitorId) { 
     return new Promise(async function(resolve, reject) { //async because we have await in the body of code below
-        //check id isnt malicious and is just a string and id is an ObjectID
-        if (typeof id !== 'string' || !ObjectID.isValid(id)) {
-            reject()
-            return; //return to end function entirely (in case malicious user tried to put in a non-string or invalid id into URL
-        } 
-
-        //go through database to find  _id. await because any database lookups are async
-        //we need to wait for it to complete before it goes on in the code 
-        let posts = await postsCollection.aggregate([
-            {$match: {_id: new ObjectID(id)}}, //1st operation - looking for a match of _id prop with value of the id that was passed in (converted to mongodb ObjectID) 
+        let aggOperations = uniqueOperations.concat([
             {$lookup: {from: 'users', localField: 'author', foreignField: '_id', as: 'authorDocument' }},  //2nd operation -we are in posts collection, we need to lookup from 'users' collection. localfield - the field from within the current post item that we want to perform that match on is the author field, which contains the id of the matching user
             // looking for _id in foreignField.  mongodb will use 'authorDocument' to add an authorDocument property
             //$lookup will return an array 
@@ -88,23 +80,44 @@ Post.findSingleById = function(id) {
                 title:1, 
                 body: 1, 
                 createdDate: 1, 
+                authorId: '$author', //mongodb - dollar sign in quotes means you are trying to access that field - so here we are accessing the original author field that contains the id and setting it to new prop 'authorId'
                 author: {$arrayElemAt: ["$authorDocument", 0]} //we want the array element at the 0th position
             }} //project allows us to spell out exactly what fields we want resulting object to have 
-        ]).toArray() 
+        ])
+        //go through database to find  _id. await because any database lookups are async
+        //we need to wait for it to complete before it goes on in the code 
+        let posts = await postsCollection.aggregate(aggOperations).toArray() 
         //aggregate performs multiple operations at once. aggregate returns mongodb obj, we convert to array so we can work with it 
 
         // clean up author prop in each post object 
         //posts will return an array 
         //we modify the posts so that in only includes username and avatar in the author prop
         posts = posts.map(function(post) {
+            post.isVisitorOwner = post.authorId.equals(visitorId); //equals method returns true or false - we use that new authorId to determine if user accessing post is the author or visitor 
             post.author = {
                 username: post.author.username,
                 avatar: new User(post.author, true).avatar
             }
             return post
         })
+        resolve(posts);
+    })
+}
 
 
+//not an object oriented approach, we store a property called findSingleById which is a function into 'Post'
+//we can treat 'Post' as a constructor (OOP approach) and we can also call a simple function on it 
+Post.findSingleById = function(id, visitorId) { 
+    return new Promise(async function(resolve, reject) { //async because we have await in the body of code below
+        //check id isnt malicious and is just a string and id is an ObjectID
+        if (typeof id !== 'string' || !ObjectID.isValid(id)) {
+            reject()
+            return; //return to end function entirely (in case malicious user tried to put in a non-string or invalid id into URL
+        } 
+
+        let posts = await Post.reusablePostQuery([
+            {$match: {_id: new ObjectID(id)}}
+        ], visitorId)
 
         if (posts.length) {
             resolve(posts[0])
@@ -113,5 +126,13 @@ Post.findSingleById = function(id) {
         }
     })
 }
+
+Post.findByAuthorId = function(authorId) {
+    return Post.reusablePostQuery([
+        {$match: {author: authorId}},
+        {$sort: {createdDate: -1}} //sort the posts by created date, by descending date (-1 is descending, 1 would be ascending)
+    ]);
+}
+
 
 module.exports = Post

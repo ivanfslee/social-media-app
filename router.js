@@ -16,5 +16,6 @@ router.get('/profile/:username', userController.ifUserExists, userController.pro
 router.get('/create-post', userController.mustBeLoggedIn, postController.viewCreateScreen);
 router.post('/create-post', userController.mustBeLoggedIn, postController.create);
 router.get('/post/:id', postController.viewSingle); //:id is flexible address after '/post/'. We also dont include mustBeLoggedIn middleware because we want public to be able to see posts
+router.get('/post/:id/edit', postController.viewEditScreen);
 
 module.exports = router;

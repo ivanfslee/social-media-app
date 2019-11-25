@@ -19,9 +19,20 @@ app.use(sessionOptions);
 
 app.use(flash());
 app.use(function(req, res, next) { //a middleware. app.use - tells express to run this function on every request. We have it arranged before our router on line 25.
+    //make current user id a available on the req object
+    //if user is logged in, visitor id will be their user id
+    //otherwise, if they are not logged in, their visitor id will be a zero 0. 
+    if (req.session.user) {
+        req.visitorId = req.session.user._id;
+    } else {
+        req.visitorId = 0;
+    }
+    
+    // make user session data available from within view templates
     res.locals.user = req.session.user;  //res.locals is an object that is available from within ejs template. We add properties to it, in this case, 'user' prop
     next(); //express will then move on to the next function for the particular route 
 })
+
 const router = require('./router.js');
 
 app.use(express.urlencoded({extended: false})); 

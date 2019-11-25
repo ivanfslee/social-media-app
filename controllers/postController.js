@@ -18,7 +18,7 @@ exports.viewSingle = async function(req, res) {
     try {
         console.log('req is ', req);
         console.log('req.params is ', req.params)
-        let post = await Post.findSingleById(req.params.id); //retrieve Post document in database by id. 
+        let post = await Post.findSingleById(req.params.id, req.visitorId); //retrieve Post document in database by id. req.visitor id will determine if user is logged in or not logged in
         //request has params prop with id - id refers to dynamic  part of the url route in router.js
         //router.get('/post/:id'   <- the ':id' changes depending on the post 
         //also we will define findSingleById to return a promise, so we prepend with 'await'  
@@ -27,4 +27,13 @@ exports.viewSingle = async function(req, res) {
         res.render('404');
     }
     
+}
+
+exports.viewEditScreen = async function(req, res) {
+    try {
+        let post = await Post.findSingleById(req.params.id)
+        res.render('edit-post', {post: post});
+    } catch {
+        res.render('404')
+    }
 }
