@@ -1,6 +1,23 @@
 //User controlling functions
 const User = require('../models/User');
 const Post = require('../models/Post');
+const Follow = require('../models/Follow');
+
+exports.sharedProfileData = async function(req, res, next) { //middleware to track followers and follows and if they are currently following user
+    let isVisitorsProfile = false; //check if we are on our own profile or not - if so, we use this to hide our follow button (to not follow ourself)
+    let isFollowing = false;
+    console.log(req.isFollowing)
+    if (req.session.user) {
+        isVisitorsProfile = req.profileUser._id.equals(req.session.user._id); //returns true or false; check if we are on our own profile - 
+        isFollowing = await Follow.isVisitorFollowing(req.profileUser._id, req.visitorId); 
+    }
+
+    req.isVisitorsProfile = isVisitorsProfile;
+    req.isFollowing = isFollowing; //add isFollowing prop to req to be used in 'exports.profilePostsScreen' method 
+    console.log(req.isFollowing)
+    next();
+}
+
 
 exports.mustBeLoggedIn = function(req, res, next) {
     if (req.session.user) {
@@ -106,12 +123,12 @@ exports.profilePostsScreen = function(req, res) {
         res.render('profile', {
             posts: posts,
             profileUsername: req.profileUser.username, //values are stored in req.profileUser that was defined in ifUserExists method
-            profileAvatar: req.profileUser.avatar
+            profileAvatar: req.profileUser.avatar,
+            isFollowing: req.isFollowing, 
+            isVisitorsProfile: req.isVisitorsProfile //this is to hide follow button if you are viewing your own profile 
         }); //second argument is passed into 'profile.ejs' and injected into the ejs template
 
     }).catch(function() {
         res.render('404');
     });
-
-
 }
