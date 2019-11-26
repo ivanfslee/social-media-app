@@ -1,6 +1,7 @@
 const usersCollection = require('../db').db().collection('users');
 const followsCollection = require('../db').db().collection('follows');
 const ObjectID = require('mongodb').ObjectID;
+const User = require('./User');
 
 let Follow = function(followedUsername, authorId) { //passed in  - user they want to follow, current user
     this.followedUsername = followedUsername;
@@ -76,5 +77,66 @@ Follow.isVisitorFollowing = async function(followedId, visitorId) {
     }
 }
 
+Follow.getFollowersById = function(id) { //id is current user profile id we are logged in as 
+    return new Promise(async (resolve, reject) => {
+        try {
+            //in aggregate, it takes an array of operations and each operation is an object 
+            let followers = await followsCollection.aggregate([
+                {$match: {followedId: id}}, //operation - finds any document in our follows collection where followedId field matches id that was passed into this function
+                {$lookup: {from: 'users', localField: 'authorId', foreignField: '_id', as: "userDoc"}}, //userDoc will array 
+                {$project: {
+                    username: {$arrayElemAt: ['$userDoc.username', 0]},
+                    email: {$arrayElemAt: ['$userDoc.email', 0]}
+                }} //project will dictate the output of this aggregate method - 
+                //ultimately, an array will be returned. each item in array will be an obj with prop username and email (from project)
+            ]).toArray() //aggregate does a bunch of operations we define in mongodb. and the entire line resolves with the value of an array because it technically returns a promise
+            followers = followers.map(function(follower) {
+                let user = new User(follower, true); //true figures out users gravatar based on email address 
+                return {username: follower.username, avatar: user.avatar} //we return username of who is doing the following and the avatar of who is doing the following 
+            })
+            resolve(followers);
+        } catch {
+            reject();
+        }        
+    })
+}
+
+Follow.getFollowingById = function(id) { //id is current user profile id we are logged in as 
+    return new Promise(async (resolve, reject) => {
+        try {
+            //in aggregate, it takes an array of operations and each operation is an object 
+            let followers = await followsCollection.aggregate([
+                {$match: {authorId: id}}, //operation - finds any document in our follows collection where authorId field matches id that was passed into this function
+                {$lookup: {from: 'users', localField: 'followedId', foreignField: '_id', as: "userDoc"}}, //userDoc will array 
+                {$project: {
+                    username: {$arrayElemAt: ['$userDoc.username', 0]},
+                    email: {$arrayElemAt: ['$userDoc.email', 0]}
+                }} //project will dictate the output of this aggregate method - 
+                //ultimately, an array will be returned. each item in array will be an obj with prop username and email (from project)
+            ]).toArray() //aggregate does a bunch of operations we define in mongodb. and the entire line resolves with the value of an array because it technically returns a promise
+            followers = followers.map(function(follower) {
+                let user = new User(follower, true); //true figures out users gravatar based on email address 
+                return {username: follower.username, avatar: user.avatar} //we return username of who is doing the following and the avatar of who is doing the following 
+            })
+            resolve(followers);
+        } catch {
+            reject();
+        }        
+    })
+}
+
+Follow.countFollowersById = function(id) {
+    return new Promise(async (resolve, reject) => {
+        let followerCount = await followsCollection.countDocuments({followedId: id});
+        resolve(followerCount);
+    })
+}
+
+Follow.countFollowingById = function(id) {
+    return new Promise(async (resolve, reject) => {
+        let followingCount = await followsCollection.countDocuments({authorId: id});
+        resolve(followingCount);
+    })
+}
 
 module.exports = Follow;
