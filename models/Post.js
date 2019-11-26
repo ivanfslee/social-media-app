@@ -1,4 +1,5 @@
 const postsCollection = require('../db').db().collection('posts');               
+const followsCollection = require('../db').db().collection('follows');       
 //require('../db') is the client.    
 //require('../db').db() gets the actual database.  
 //.collection('posts') gives us access to posts collection in database 
@@ -223,6 +224,21 @@ Post.countPostsByAuthor = function(id) {
     })
 }
 
+Post.getFeed = async function(id) { //id is just a string of text, so to work with mongodb, we need to convert to mongodb ObjectID
+    // create array of user ids that the current user follows (get your followers)
+    let followedUsers = await followsCollection.find({authorId: new ObjectID(id)}).toArray();
 
+    //array of user ids
+    followedUsers = followedUsers.map(function(followDoc) {
+        return followDoc.followedId;
+    })
+
+    //look for posts where the author is in the array of followed users  (basically, get the posts of your followers)
+    return Post.reusablePostQuery([
+        {$match: {author: {$in: followedUsers}}}, //find any post document in database where author valus is a value in our followedUsers array
+        {$sort: {createdDate: -1}} //-1 means sort by descending createdDate 
+    ]) //look up user name and get gravatar
+
+}
 
 module.exports = Post

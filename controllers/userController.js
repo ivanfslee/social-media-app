@@ -100,16 +100,18 @@ exports.register = (req, res) => {
     }); 
 }
 
-exports.home = (req, res) => {
+exports.home = async (req, res) => {
     if (req.session.user) { //req.session.user only exists if user has logged on successfully in the login function - 
-    //if they have session data, send them to their dashboard. 
-    //The only way they have session data is if they logged in before
+        //fetch feed of posts for current user
+        let posts = await Post.getFeed(req.session.user._id); //getFeed will get posts to display into users dashboard 
+        //if they have session data, send them to their dashboard. 
+        //The only way they have session data is if they logged in before
         //console.log(req.session)
         //res.render('home-dashboard', {avatar: req.session.user.avatar, username: req.session.user.username});  //second arg will pass data into the ejs template -
         // later we removed the second arg and instead used a middleware in app.js to inject the req.session props to the html using res.locals object. 
-        res.render('home-dashboard');
+        res.render('home-dashboard', {posts: posts});
         //second arg is an obj that grabs the username from the req.session object 
-    } else {
+    } else { //if not logged in 
         res.render('home-guest', {regErrors: req.flash('regErrors')});  //render our ejs file and inject error message from flash package
         //when we retrieve the 'errors' from the flash obj in database, it will remove the error message from the database session array also
     }
