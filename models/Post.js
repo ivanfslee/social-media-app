@@ -137,6 +137,8 @@ Post.reusablePostQuery = function(uniqueOperations, visitorId) {
         //we modify the posts so that in only includes username and avatar in the author prop
         posts = posts.map(function(post) {
             post.isVisitorOwner = post.authorId.equals(visitorId); //equals method returns true or false - we use that new authorId to determine if user accessing post is the author or visitor 
+            post.authorId = undefined; //we don't need authorId anymore so we set it to undefined - authorId was only used to determine the previous line of code - if isVisitorOwner true or false
+
             post.author = {
                 username: post.author.username,
                 avatar: new User(post.author, true).avatar
@@ -196,5 +198,22 @@ Post.delete = function(postIdToDelete, currentUserId) {
     })
 }
 
+
+Post.search = function(searchTerm) {
+    return new Promise(async (resolve, reject) => {
+        //verify search term is just a string a not an object - from malicious user
+        if (typeof searchTerm === 'string') { 
+            let posts = await Post.reusablePostQuery([
+                {$match: {$text: {$search: searchTerm}}}, //perform text search - we need to create an index of our titles and body of posts in our mongoDB so the results are cached already -otherwise search is an incredibly taxing operation on the database without indexing
+                {$sort: {score : {$meta: 'textScore'}}}
+            ]) //sort results by textScore
+            //resuablePostQuery takes an array of operations as an argument
+            //we give it a match and sort operation to perform on the database 
+            resolve(posts);
+        } else {
+            reject();
+        }
+    })
+}
 
 module.exports = Post

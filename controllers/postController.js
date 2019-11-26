@@ -95,3 +95,11 @@ exports.delete = function(req, res) {
     });
 
 }
+
+exports.search = function(req, res) {
+    Post.search(req.body.searchTerm).then(posts => {
+        res.json(posts); //send back the found posts as a json data response 
+    }).catch(() => {
+        res.json([]); //if promise rejects, send back an empty array
+    })
+}
