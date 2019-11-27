@@ -72,11 +72,14 @@ io.use(function(socket, next) {
     sessionOptions(socket.request, socket.request.res, next); //makes express session data available from within context of socket.io 
 })
 
-io.on('connection', function(socket) {  //socket parameter represents connection between server and browser 
+io.on('connection', function(socket) {  //socket parameter represents connection between server and browser - new connection established
         if (socket.request.session.user) { //only if you are logged in
             let user = socket.request.session.user; //store session data in variable user
-            socket.on('chatMessageFromBrowser', function(data) { 
-            io.emit('chatMessageFromServer', {message: data.message, username: user.username, avatar: user.avatar})//broadcast message, username, and avatar, out to all connected users. 
+
+            socket.emit('welcome', {username: user.username, avatar: user.avatar}) //new event called 'welcome' will send obj with username and avatar props to browser - 
+
+            socket.on('chatMessageFromBrowser', function(data) {  //when server gets 'chatMessageFromBrowser' event, it emits 'chatMessageFromServer' event 
+                socket.broadcast.emit('chatMessageFromServer', {message: sanitizeHTML(data.message, {allowedTags: [], allowedAttributes: {}}), username: user.username, avatar: user.avatar})//broadcast message, username, and avatar, out to all connected users except to the person who sent it (socket connection that sent it) 
             //if you wanted to emit event only to the browser that sent you the message, you would use socket.emit()
 
             //essentially we're just taking the message that one browser sent to the server //socket.on('chatMessageFromBrowser', function(data)

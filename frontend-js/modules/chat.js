@@ -1,4 +1,4 @@
-
+import DOMPurify from 'dompurify';
 
 export default class Chat {
     constructor() {
@@ -28,6 +28,17 @@ export default class Chat {
     sendMessageToServer() {
         this.socket.emit('chatMessageFromBrowser', {message: this.chatField.value})  //this.socket is our socket connection. emit method in socket.io will emit an event with a bit of data to the server. 
         //first arg is title of event, second arg is an obj with any data we want to send to the server 
+        this.chatLog.insertAdjacentHTML('beforeend', DOMPurify.sanitize(`
+        <div class="chat-self">
+            <div class="chat-message">
+                <div class="chat-message-inner">
+                    ${this.chatField.value}
+                </div>
+            </div>
+            <img class="chat-avatar avatar-tiny" src="${this.avatar}">
+        </div>
+        `))
+        this.chatLog.scrollTop =  this.chatLog.scrollHeight; //this sets the chatLog to automatically scroll when messages get to the bottom of chatLog window - sets scroll position to its exact scroll height value 
         this.chatField.value = ''; //after we emit the chatField value, we clear the field and focus our cursor back on it 
         this.chatField.focus(); //focus cursor back on the chatfield 
     }
@@ -43,6 +54,7 @@ export default class Chat {
         this.openedYet = true; //once chat is shown once. this.openConnection will run and establish connection to server for chat function. 
         //even if user hides the chat, the connection will still stay on 
         this.chatWrapper.classList.add('chat--visible');
+        this.chatField.focus();  //focus cursor to chat field when you click on open chat icon
     }
 
     openConnection() {
@@ -50,6 +62,10 @@ export default class Chat {
         //io() function will open a conenction between our browser and our server
         //basically, this.socket is our socket connection between our browser and our server 
 
+        this.socket.on('welcome', data => { //data is the {username: user.username, avatar: user.avatar} obj from app.js 
+            this.username = data.username;
+            this.avatar = data.avatar;
+        })
         this.socket.on('chatMessageFromServer', (data) => { //when browser receives an event called 'chatMessageFromServer' from the server, it will run function. 
             this.displayMessageFromServer(data);
         });
@@ -57,15 +73,16 @@ export default class Chat {
 
     displayMessageFromServer(data) {
         //select chat window
-        this.chatLog.insertAdjacentHTML('beforeend', `
+        this.chatLog.insertAdjacentHTML('beforeend', DOMPurify.sanitize(`
         <div class="chat-other">
-        <a href="#"><img class="avatar-tiny" src="${data.avatar}"></a>
+            <a href="/profile/${data.username}"><img class="avatar-tiny" src="${data.avatar}"></a>
         <div class="chat-message"><div class="chat-message-inner">
-          <a href="#"><strong>${data.username}:</strong></a>
+          <a href="/profile/${data.username}"><strong>${data.username}:</strong></a>
           ${data.message}
         </div></div>
         </div>
-        `);
+        `));
+        this.chatLog.scrollTop =  this.chatLog.scrollHeight; //this sets the chatLog to automatically scroll when messages get to the bottom of chatLog window - sets scroll position to its exact scroll height value 
     }
 
     injectHTML() {
