@@ -7,8 +7,9 @@ export default class Chat {
         this.openIcon = document.querySelector('.header-chat-icon');
 
         this.injectHTML();
-        this.chatField = document.querySelector('#chatField') //select chat textfield and form it lives within 
-        this.chatForm = document.querySelector('#chatForm') //select chat form the chat field lives within 
+        this.chatLog = document.querySelector('#chat'); //chat window
+        this.chatField = document.querySelector('#chatField'); //select chat textfield and form it lives within 
+        this.chatForm = document.querySelector('#chatForm'); //select chat form the chat field lives within 
         this.closeIcon = document.querySelector('.chat-title-bar-close'); //this line needs to be before this.injectHTML() 
         this.events();
     }
@@ -49,15 +50,27 @@ export default class Chat {
         //io() function will open a conenction between our browser and our server
         //basically, this.socket is our socket connection between our browser and our server 
 
-        this.socket.on('chatMessageFromServer', function(data) { //when browser receives an event called 'chatMessageFromServer' from the server, it will run function. 
-            alert(data.message);
-        })
+        this.socket.on('chatMessageFromServer', (data) => { //when browser receives an event called 'chatMessageFromServer' from the server, it will run function. 
+            this.displayMessageFromServer(data);
+        });
     }
 
+    displayMessageFromServer(data) {
+        //select chat window
+        this.chatLog.insertAdjacentHTML('beforeend', `
+        <div class="chat-other">
+        <a href="#"><img class="avatar-tiny" src="${data.avatar}"></a>
+        <div class="chat-message"><div class="chat-message-inner">
+          <a href="#"><strong>${data.username}:</strong></a>
+          ${data.message}
+        </div></div>
+        </div>
+        `);
+    }
 
     injectHTML() {
         this.chatWrapper.innerHTML = `
-        <div class="chat-title-bar">Chat <span class="chat-title-bar-close"><i class="fas fa-times-circle"></i></span>
+        <div class="chat-title-bar">Chat <span class="chat-title-bar-close"><i class="fas fa-times-circle"></i></span></div>
         <div id="chat" class="chat-log"></div>
 
         <form id="chatForm" class="chat-form border-top">

@@ -67,17 +67,23 @@ const server = require('http').createServer(app); //'http' is included. This lin
 //add socket functionality to the server
 const io = require('socket.io')(server);
 
+//express session package integrated with socket io package
+io.use(function(socket, next) {
+    sessionOptions(socket.request, socket.request.res, next); //makes express session data available from within context of socket.io 
+})
+
 io.on('connection', function(socket) {  //socket parameter represents connection between server and browser 
-    socket.on('chatMessageFromBrowser', function(data) { 
-        //console.log(data.message); 
-        io.emit('chatMessageFromServer', {message: data.message})//broadcast data out to all connected users. 
-        //if you wanted to emit event only to the browser that sent you the message, you would use socket.emit()
+        if (socket.request.session.user) { //only if you are logged in
+            let user = socket.request.session.user; //store session data in variable user
+            socket.on('chatMessageFromBrowser', function(data) { 
+            io.emit('chatMessageFromServer', {message: data.message, username: user.username, avatar: user.avatar})//broadcast message, username, and avatar, out to all connected users. 
+            //if you wanted to emit event only to the browser that sent you the message, you would use socket.emit()
 
-
-        //essentially we're just taking the message that one browser sent to the server //socket.on('chatMessageFromBrowser', function(data)
-        // and then the server is sending that out to all connected browsers. //io.emit('chatMessageFromServer', {message: data.message})
-
-    } ) //when server detects event of the type 'chatMessageFromBrowser' (defined in chat.js). Function's data parameter is object we sent from chat.js emit() method call 
+            //essentially we're just taking the message that one browser sent to the server //socket.on('chatMessageFromBrowser', function(data)
+            // and then the server is sending that out to all connected browsers. //io.emit('chatMessageFromServer', {message: data.message})
+    
+        }) //when server detects event of the type 'chatMessageFromBrowser' (defined in chat.js). Function's data parameter is object we sent from chat.js emit() method call
+    }  
 })
 
 module.exports = server;
