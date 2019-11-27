@@ -62,4 +62,13 @@ app.set('view engine', 'ejs');
 
 app.use('/', router);
 
-module.exports = app;
+const server = require('http').createServer(app); //'http' is included. This line creates a server that is going to use Express app as its handler 
+
+//add socket functionality to the server
+const io = require('socket.io')(server);
+
+io.on('connection', function() {  //when web browser opens a socket connection with server, log a message to server console.
+    console.log('new user connected');
+})
+
+module.exports = server;

@@ -1,3 +1,5 @@
+import { isObject } from "util";
+
 export default class Chat {
     constructor() {
         this.openedYet = false;
@@ -31,7 +33,8 @@ export default class Chat {
     }
 
     openConnection() {
-        alert('opening a connection');
+        this.socket = io(); //function available in browser scope for socketio functionality 
+        //io() function will open a conenction between our browser and our server
     }
 
 
