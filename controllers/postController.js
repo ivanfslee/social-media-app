@@ -25,7 +25,7 @@ exports.viewSingle = async function(req, res) {
         //request has params prop with id - id refers to dynamic  part of the url route in router.js
         //router.get('/post/:id'   <- the ':id' changes depending on the post 
         //also we will define findSingleById to return a promise, so we prepend with 'await'  
-        res.render('single-post-screen', {post: post});
+        res.render('single-post-screen', {post: post, title: post.title});
     } catch {
         res.render('404');
     }
