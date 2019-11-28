@@ -12,6 +12,11 @@ exports.doesUsernameExist = function(req, res) {
     })
 }
 
+exports.doesEmailExist = async function(req, res) {
+    let emailBool = await User.doesEmailExist(req.body.email); //doesEmailExist will resolve with a true/false 
+    res.json(emailBool); //response to ajax request from front end will be json true or false
+}
+
 exports.sharedProfileData = async function(req, res, next) { //middleware to track followers and follows and if they are currently following user
     let isVisitorsProfile = false; //check if we are on our own profile or not - if so, we use this to hide our follow button (to not follow ourself)
     let isFollowing = false;
