@@ -5,6 +5,7 @@ import DOMpurify from 'dompurify';
 export default class Search { 
     // 1. select DOM elements and track userful data
     constructor() {
+        this._csrf = document.querySelector('[name="_csrf"]').value; //store csrfToken value and attach to ajax requests 
         this.injectHTML();
         this.headerSearchIcon = document.querySelector('.header-search-icon');
         this.overlay = document.querySelector('.search-overlay');
@@ -49,7 +50,8 @@ export default class Search {
 
 
     sendRequest() {
-        axios.post('/search', {searchTerm: this.inputField.value}).then(response => { //response will be json data - we defined in postController
+        //add csrf token to this ajax post request, to validate the request 
+        axios.post('/search', {_csrf: this._csrf, searchTerm: this.inputField.value}).then(response => { //response will be json data - we defined in postController
             console.log(response.data); //response.data is a json of posts we get from the backend/mongodb
             this.renderResultsHTML(response.data);
         }).catch(() => {

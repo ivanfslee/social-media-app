@@ -3,6 +3,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo')(session); // MongoStore is a constructor. We pass in express-session package 
 const flash = require('connect-flash'); //flash messaging package 
 const markdown = require('marked');
+const csrf = require('csurf'); //package to deal with cross site request forgery
 const app = express();
 const sanitizeHTML = require('sanitize-html');
 //configuration for sessions 
@@ -60,7 +61,24 @@ app.set('views', 'views');
 app.set('view engine', 'ejs'); 
 //let express know what template engine we are using 
 
+app.use(csrf()); //any requests that modify state (post/put/delete) will need to have valid and matching csrf token, otherwise, the request will be rejected and throw an error
+app.use(function(req, res, next) {
+    res.locals.csrfToken = req.csrfToken();   //contains csrf token that will be outputted into html template 
+    next();
+})
+
 app.use('/', router);
+
+app.use(function(err, req, res, next) {
+    if (err) {
+        if (err.code == "EBADCSRFTOKEN") {
+            req.flash('errors', 'Cross site request forger detected');
+            req.session.save(() => res.redirect('/'));
+        } else {
+            res.render('404');
+        }
+    }
+})
 
 const server = require('http').createServer(app); //'http' is included. This line creates a server that is going to use Express app as its handler 
 

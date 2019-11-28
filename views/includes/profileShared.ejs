@@ -5,11 +5,15 @@
         <form class="ml-2 d-inline" action="/removeFollow/<%= profileUsername %>" method="POST">
           <!-- <button class="btn btn-primary btn-sm">Follow <i class="fas fa-user-plus"></i></button> -->
           <!-- stop following button -->
+          <!-- create hidden input where our csrfToken is injected -->
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">  
           <button class="btn btn-danger btn-sm">Stop Following <i class="fas fa-user-times"></i></button>
         </form>
       <% } else { %>
         <form class="ml-2 d-inline" action="/addFollow/<%= profileUsername %>" method="POST">
           <!-- follow button -->
+          <!-- create hidden input where our csrfToken is injected -->
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">  
           <button class="btn btn-primary btn-sm">Follow <i class="fas fa-user-plus"></i></button>
           <!-- <button class="btn btn-danger btn-sm">Stop Following <i class="fas fa-user-times"></i></button> -->
         </form>

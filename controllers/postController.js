@@ -19,7 +19,7 @@ exports.create = function(req, res) {
 
 exports.viewSingle = async function(req, res) {
     try {
-        console.log('req is ', req);
+        //console.log('req is ', req);
         console.log('req.params is ', req.params);
         let post = await Post.findSingleById(req.params.id, req.visitorId); //retrieve Post document in database by id. req.visitor id will determine if user is logged in or not logged in
         //request has params prop with id - id refers to dynamic  part of the url route in router.js
@@ -34,12 +34,14 @@ exports.viewSingle = async function(req, res) {
 
 exports.viewEditScreen = async function(req, res) {
     try {
-        let post = await Post.findSingleById(req.params.id)
+        let post = await Post.findSingleById(req.params.id, req.visitorId);
         console.log('post.authorId is, ', post.authorId);
         console.log('typeof post.authorId is, ', typeof post.authorId); //object
         console.log('req.visitorId is, ', req.visitorId);
         console.log('typeof req.visitorId is, ', typeof req.visitorId); //string
-        if (post.authorId == req.visitorId) { //needs to be double equals here because authorId and visitorId are different data types. Triple equals will not work 
+
+        if (post.isVisitorOwner) {
+        //if (post.authorId == req.visitorId) { //needs to be double equals here because authorId and visitorId are different data types. Triple equals will not work 
             res.render('edit-post', {post: post});
         } else {
             req.flash('errors', 'You do not have permission to do that!!!');

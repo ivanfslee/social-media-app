@@ -2,6 +2,7 @@ import axios from 'axios';
 
 export default class RegistrationForm {
     constructor() {
+        this._csrf = document.querySelector('[name="_csrf"]').value; //store csrfToken value and attach to ajax requests 
         this.form = document.querySelector('#registration-form');
         this.allFields = document.querySelectorAll('#registration-form .form-control'); //returns array of multiple elements - should return username/email/password fields 
         this.insertValidationElements();
@@ -115,7 +116,8 @@ export default class RegistrationForm {
         }
 
         if (!this.email.errors) { //if no errors send ajax request to backend server
-            axios.post('/doesEmailExist', {email: this.email.value}).then((response) => {
+            //also attach csrf token to ajax post request, in order to validate the request 
+            axios.post('/doesEmailExist', {_csrf: this._csrf, email: this.email.value}).then((response) => {
                 if (response.data) { //response.data is true or false
                     this.email.isUnique = false;
                     this.showValidationError(this.email, 'That email is already being used');
@@ -162,7 +164,8 @@ export default class RegistrationForm {
 
        //only send async request to backend if there are no errors
        if (!this.username.errors) {
-           axios.post('/doesUsernameExist', {username: this.username.value}).then((response) => { //response will be a true or false 
+           //also added _csrf to include csrfToken to the ajax post request
+           axios.post('/doesUsernameExist', {_csrf: this._csrf, username: this.username.value}).then((response) => { //response will be a true or false 
             if (response.data) { //true - username exosts
                 this.showValidationError(this.username, 'That username is already taken');
                 this.username.isUnique = false;
