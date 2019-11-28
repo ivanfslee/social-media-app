@@ -3,6 +3,15 @@ const User = require('../models/User');
 const Post = require('../models/Post');
 const Follow = require('../models/Follow');
 
+exports.doesUsernameExist = function(req, res) {
+    //findByUsername resolves with a doc from mongodb if it finds a doc
+    User.findByUsername(req.body.username).then(function() {
+        res.json(true); //axios request from frontend will receive a response in json format - true
+    }).catch(function() {
+        res.json(false);
+    })
+}
+
 exports.sharedProfileData = async function(req, res, next) { //middleware to track followers and follows and if they are currently following user
     let isVisitorsProfile = false; //check if we are on our own profile or not - if so, we use this to hide our follow button (to not follow ourself)
     let isFollowing = false;
